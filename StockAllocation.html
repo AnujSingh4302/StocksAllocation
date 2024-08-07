@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Investment Allocator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #ff6f61, #6a1b9a);
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            color: #000;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotateY(90deg);
+            transition: opacity 0.5s, transform 0.5s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .container.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) rotateY(0);
+        }
+        h1 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="number"], input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #ff5722;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #e64a19;
+        }
+        .summary {
+            margin-top: 20px;
+        }
+        .details {
+            display: none;
+            text-align: left;
+        }
+        .fireflies {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .firefly {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+            animation: move 20s linear infinite;
+        }
+        @keyframes move {
+            0%, 100% { opacity: 0; }
+            10% { opacity: 1; }
+            50% { opacity: 1; transform: translate3d(var(--tx), var(--ty), 0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="startContainer">
+        <h1>Stock Investment Allocator</h1>
+        <div class="form-group">
+            <label for="totalAmount">Total Amount to Invest (₹):</label>
+            <input type="number" id="totalAmount" min="1">
+        </div>
+        <button onclick="nextPage('startContainer', 'inputContainer')">Next</button>
+    </div>
+
+    <div class="container" id="inputContainer">
+        <h1>Stock Investment Allocator</h1>
+        <div class="form-group">
+            <label for="stockCount">Number of Stocks:</label>
+            <input type="number" id="stockCount" min="1" max="10">
+        </div>
+        <button onclick="generateInputs()">Next</button>
+        <button onclick="previousPage('inputContainer', 'startContainer')">Back</button>
+    </div>
+
+    <div id="stockInputs"></div>
+
+    <div class="container" id="summaryContainer">
+        <h1>Investment Summary</h1>
+        <div class="summary" id="summary"></div>
+        <button onclick="toggleDetails()">Show Allocation of Stocks</button>
+        <div class="details" id="details"></div>
+        <button onclick="previousPage('summaryContainer', 'stockInputs')">Edit These</button>
+        <button onclick="resetPage()">Start Again</button>
+    </div>
+
+    <div class="fireflies"></div>
+
+    <script>
+        function createFireflies() {
+            const fireflies = document.querySelector('.fireflies');
+            for (let i = 0; i < 50; i++) {
+                const firefly = document.createElement('div');
+                firefly.classList.add('firefly');
+                firefly.style.setProperty('--tx', `${Math.random() * 100}vw`);
+                firefly.style.setProperty('--ty', `${Math.random() * 100}vh`);
+                firefly.style.left = `${Math.random() * 100}vw`;
+                firefly.style.top = `${Math.random() * 100}vh`;
+                fireflies.appendChild(firefly);
+            }
+        }
+
+        createFireflies();
+
+        function nextPage(currentId, nextId) {
+            document.getElementById(currentId).classList.remove('active');
+            setTimeout(() => {
+                document.getElementById(nextId).classList.add('active');
+            }, 500);
+        }
+
+        function previousPage(currentId, previousId) {
+            document.getElementById(currentId).classList.remove('active');
+            setTimeout(() => {
+                document.getElementById(previousId).classList.add('active');
+            }, 500);
+        }
+
+        function generateInputs() {
+            const stockCount = document.getElementById('stockCount').value;
+            if (stockCount <= 0) return;
+            const stockInputs = document.getElementById('stockInputs');
+            stockInputs.innerHTML = '';
+
+            for (let i = 0; i < stockCount; i++) {
+                stockInputs.innerHTML += `
+                    <div class="container" id="stockValueContainer${i}">
+                        <h1>Enter Stock ${i + 1} Value</h1>
+                        <div class="form-group">
+                            <label for="stockValue${i}">Stock ${i + 1} Value (₹):</label>
+                            <input type="number" id="stockValue${i}" min="0">
+                        </div>
+                        <button onclick="nextStockValue(${i})">Next</button>
+                        <button onclick="previousPage('stockValueContainer${i}', 'inputContainer')">Back</button>
+                    </div>
+                    <div class="container" id="stockIncreaseContainer${i}">
+                        <h1>Enter Stock ${i + 1} Increase</h1>
+                        <div class="form-group">
+                            <label for="stockIncrease${i}">Expected Increase (%) :</label>
+                            <input type="number" id="stockIncrease${i}" min="0" max="100">
+                        </div>
+                        <button onclick="nextStockIncrease(${i})">Next</button>
+                        <button onclick="previousPage('stockIncreaseContainer${i}', 'stockValueContainer${i}')">Back</button>
+                    </div>
+                    <div class="container" id="stockRiskContainer${i}">
+                        <h1>Enter Stock ${i + 1} Risk Factor</h1>
+                        <div class="form-group">
+                            <label for="stockRisk${i}">Risk Factor (%) :</label>
+                            <input type="number" id="stockRisk${i}" min="0" max="100">
+                        </div>
+                        <button onclick="nextStockRisk(${i}, ${stockCount})">Next</button>
+                        <button onclick="previousPage('stockRiskContainer${i}', 'stockIncreaseContainer${i}')">Back</button>
+                    </div>
+                `;
+            }
+
+            nextPage('inputContainer', `stockValueContainer0`);
+        }
+
+        function nextStockValue(index) {
+            nextPage(`stockValueContainer${index}`, `stockIncreaseContainer${index}`);
+        }
+
+        function nextStockIncrease(index) {
+            nextPage(`stockIncreaseContainer${index}`, `stockRiskContainer${index}`);
+        }
+
+        function nextStockRisk(index, stockCount) {
+            if (index + 1 < stockCount) {
+                nextPage(`stockRiskContainer${index}`, `stockValueContainer${index + 1}`);
+            } else {
+                generateSummary();
+            }
+        }
+
+        function generateSummary() {
+            const stockCount = document.getElementById('stockCount').value;
+            const totalAmount = document.getElementById('totalAmount').value;
+            const stockValues = [];
+            const summary = document.getElementById('summary');
+            const details = document.getElementById('details');
+
+            if (!totalAmount || totalAmount <= 0 || stockCount <= 0) {
+                summary.innerHTML = '<p>Please enter valid values.</p>';
+                return;
+            }
+
+            for (let i = 0; i < stockCount; i++) {
+                const value = parseFloat(document.getElementById(`stockValue${i}`).value);
+                const increase = parseFloat(document.getElementById(`stockIncrease${i}`).value);
+                const risk = parseFloat(document.getElementById(`stockRisk${i}`).value);
+                stockValues.push({ value, increase, risk });
+            }
+
+            // Example allocation logic (to be adjusted for actual allocation logic)
+            let allocatedAmount = 0;
+            stockValues.sort((a, b) => (b.increase - b.risk) - (a.increase - a.risk)); // Sort by best risk-adjusted return
+            const allocations = stockValues.map(stock => {
+                const allocation = (totalAmount - allocatedAmount) / stockCount;
+                allocatedAmount += allocation;
+                const expectedReturn = allocation * (1 + stock.increase / 100);
+                return { ...stock, investment: allocation, expectedReturn };
+            });
+
+            let resultHTML = '<ul>';
+            let detailHTML = '<ul>';
+            allocations.forEach((stock, index) => {
+                resultHTML += `
+                    <li>
+                        <h3>Stock ${index + 1}</h3>
+                        <p>Investment: ₹${stock.investment.toFixed(2)}</p>
+                    </li>
+                `;
+                detailHTML += `<li>Stock ${index + 1}: Invest ₹${stock.investment.toFixed(2)}. Expected return: ₹${stock.expectedReturn.toFixed(2)} based on value ₹${stock.value}, increase ${stock.increase}%, and risk ${stock.risk}%.</li>`;
+            });
+            resultHTML += '</ul>';
+            detailHTML += '</ul>';
+
+            summary.innerHTML = resultHTML;
+            details.innerHTML = detailHTML;
+
+            nextPage(`stockRiskContainer${stockCount - 1}`, 'summaryContainer');
+        }
+
+        function toggleDetails() {
+            const details = document.getElementById('details');
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function resetPage() {
+            document.getElementById('totalAmount').value = '';
+            document.getElementById('stockCount').value = '';
+            document.getElementById('stockInputs').innerHTML = '';
+            document.getElementById('summary').innerHTML = '';
+            document.getElementById('details').innerHTML = '';
+            document.getElementById('details').style.display = 'none';
+            nextPage('summaryContainer', 'startContainer');
+        }
+
+        document.getElementById('startContainer').classList.add('active');
+    </script>
+</body>
+</html>
